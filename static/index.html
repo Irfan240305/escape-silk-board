@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escape Silk Board</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #FDF6EC;
+  --card: #FFFFFF;
+  --card-border: #F0E6D6;
+  --text: #1A1A1A;
+  --muted: #6B6356;
+  --accent: #E8734A;
+  --accent-glow: #E8734A33;
+  --green: #34A853;
+  --green-light: #D4F5DD;
+  --yellow: #F5C842;
+  --yellow-light: #FFF4CC;
+  --red: #E84A4A;
+  --red-light: #FFD4D4;
+  --danger: #DC2626;
+  --warning: #D97706;
+  --surface: #FAF3E8;
+  --narrator-bg: #F8F0E3;
+  --progress-track: #E8DFD0;
+  --progress-fill: #E8734A;
+  --font: 'Space Grotesk', sans-serif;
+  --mono: 'Space Mono', monospace;
+  --radius: 16px;
+  --radius-sm: 10px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* === RAIN OVERLAY === */
+.rain-container {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 1s;
+}
+.rain-container.active { opacity: 1; }
+.raindrop {
+  position: absolute;
+  width: 2px;
+  background: linear-gradient(transparent, rgba(74, 155, 232, 0.4));
+  animation: rain-fall linear infinite;
+}
+@keyframes rain-fall {
+  0% { transform: translateY(-100vh); }
+  100% { transform: translateY(100vh); }
+}
+
+/* === HEADER === */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  background: var(--card);
+  border-bottom: 1px solid var(--card-border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.header-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  background: #FEF0EB;
+  padding: 4px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* === MAIN LAYOUT === */
+.game-container {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 53px);
+}
+
+/* === INTRO SCREEN === */
+.intro-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 16px;
+  flex: 1;
+  animation: fadeIn 0.5s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.intro-screen h1 {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin-bottom: 8px;
+}
+.intro-screen .tagline {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.6;
+  max-width: 340px;
+  margin-bottom: 28px;
+}
+.flight-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  margin-bottom: 28px;
+  width: 100%;
+  max-width: 300px;
+}
+.flight-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+}
+.flight-row:not(:last-child) { border-bottom: 1px solid var(--card-border); }
+.flight-row label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+}
+.flight-row .val {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+}
+.flight-row .val.red { color: var(--red); }
+.start-btn {
+  padding: 16px 44px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font);
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.3px;
+}
+.start-btn:hover { background: #D4663F; transform: translateY(-2px); box-shadow: 0 8px 25px var(--accent-glow); }
+
+/* === STATS BAR === */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  transition: all 0.4s ease;
+}
+.stat-card.danger { border-color: var(--danger); background: var(--red-light); }
+.stat-card.warning { border-color: var(--warning); background: var(--yellow-light); }
+.stat-card.pulse { animation: pulse-danger 1s ease-in-out infinite; }
+@keyframes pulse-danger {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); box-shadow: 0 0 16px var(--accent-glow); }
+}
+.stat-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.stat-value {
+  font-family: var(--mono);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.stat-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* === ROUTE PROGRESS === */
+.route-bar {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+.route-track {
+  position: relative;
+  height: 6px;
+  background: var(--progress-track);
+  border-radius: 3px;
+  margin: 6px 0 10px;
+}
+.route-fill {
+  height: 100%;
+  background: var(--progress-fill);
+  border-radius: 3px;
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+.route-dot {
+  position: absolute;
+  right: -7px;
+  top: -4px;
+  width: 14px;
+  height: 14px;
+  background: var(--accent);
+  border: 3px solid var(--card);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--accent), 0 0 10px var(--accent-glow);
+}
+.route-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 500;
+}
+.route-labels span:last-child { color: var(--accent); font-weight: 600; }
+
+/* === TURN INDICATOR === */
+.turn-indicator {
+  text-align: center;
+  font-size: 11px;
+  color: var(--muted);
+  padding: 4px 0 6px;
+  font-weight: 500;
+}
+
+/* === CHAT AREA === */
+.chat-area {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 0;
+  margin-bottom: 10px;
+  scroll-behavior: smooth;
+}
+
+.msg {
+  max-width: 88%;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  line-height: 1.55;
+  animation: msg-in 0.3s ease-out;
+}
+@keyframes msg-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.msg.narrator {
+  align-self: flex-start;
+  background: var(--narrator-bg);
+  border: 1px solid var(--card-border);
+  border-bottom-left-radius: 4px;
+}
+.msg .narrator-tag {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+.msg .hint {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--card-border);
+  font-size: 12px;
+  color: var(--muted);
+  font-style: italic;
+}
+.msg.player {
+  align-self: flex-end;
+  background: var(--accent);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+.msg.system {
+  align-self: center;
+  background: var(--yellow-light);
+  border: 1px solid #EDD89A;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+  max-width: 95%;
+  font-weight: 500;
+}
+
+/* === TYPING INDICATOR === */
+.typing {
+  display: none;
+  align-self: flex-start;
+  padding: 14px 20px;
+  background: var(--narrator-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  border-bottom-left-radius: 4px;
+}
+.typing.active { display: flex; gap: 5px; align-items: center; }
+.typing span {
+  width: 7px; height: 7px;
+  background: var(--muted);
+  border-radius: 50%;
+  animation: typing-bounce 1.2s ease-in-out infinite;
+}
+.typing span:nth-child(2) { animation-delay: 0.15s; }
+.typing span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes typing-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-6px); opacity: 1; }
+}
+
+/* === INPUT === */
+.input-area {
+  display: flex;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--card-border);
+}
+.input-area input {
+  flex: 1;
+  padding: 14px 16px;
+  font-family: var(--font);
+  font-size: 14px;
+  border: 2px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.input-area input:focus { border-color: var(--accent); }
+.input-area input::placeholder { color: #B8AFA4; }
+.input-area input:disabled { opacity: 0.5; }
+.send-btn {
+  padding: 14px 20px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.send-btn:hover { background: #D4663F; transform: translateY(-1px); }
+.send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* === GAME OVER OVERLAYS === */
+.overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(6px);
+  z-index: 999;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+.overlay.active { display: flex; animation: overlay-in 0.4s ease; }
+@keyframes overlay-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* BOARDING PASS */
+.boarding-pass {
+  background: var(--card);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 380px;
+  overflow: hidden;
+  animation: card-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+}
+@keyframes card-in {
+  from { opacity: 0; transform: scale(0.8) rotate(-2deg); }
+  to { opacity: 1; transform: scale(1) rotate(0); }
+}
+.pass-header {
+  background: var(--accent);
+  color: white;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.pass-header h3 { font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
+.pass-body { padding: 20px; }
+.pass-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.pass-row:last-child { margin-bottom: 0; }
+.pass-field label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 2px;
+}
+.pass-field .val {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 700;
+}
+.pass-divider {
+  border: none;
+  border-top: 2px dashed var(--card-border);
+  margin: 0;
+}
+.pass-footer {
+  padding: 14px 20px;
+  font-size: 12px;
+  color: var(--muted);
+  font-style: italic;
+}
+.pass-barcode {
+  font-family: var(--mono);
+  font-size: 7px;
+  letter-spacing: 2px;
+  color: #ccc;
+  text-align: center;
+  padding: 6px 20px 12px;
+}
+.play-again {
+  display: block;
+  width: calc(100% - 40px);
+  margin: 0 20px 20px;
+  padding: 14px;
+  background: var(--text);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.play-again:hover { opacity: 0.85; }
+
+/* MISSED FLIGHT CERT */
+.missed-cert {
+  background: var(--card);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 380px;
+  overflow: hidden;
+  animation: card-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+  text-align: center;
+}
+.cert-header {
+  background: var(--red);
+  color: white;
+  padding: 18px 20px;
+}
+.cert-header h3 { font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
+.cert-body { padding: 24px 20px 16px; }
+.cert-body .big-time {
+  font-family: var(--mono);
+  font-size: 44px;
+  font-weight: 700;
+  color: var(--red);
+}
+.cert-body .cert-label {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+  margin-bottom: 16px;
+}
+.cert-cause {
+  background: var(--red-light);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  margin: 12px 0;
+  text-align: left;
+}
+.cert-cause label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--red);
+  display: block;
+  margin-bottom: 4px;
+}
+.cert-cause p { font-size: 13px; line-height: 1.4; }
+.cert-stats {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin-top: 16px;
+}
+.cert-stats .pass-field { text-align: center; }
+.cert-ramesh {
+  font-size: 12px;
+  color: var(--muted);
+  font-style: italic;
+  padding: 12px 20px 16px;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 480px) {
+  .game-container { padding: 12px; }
+  .stat-value { font-size: 18px; }
+  .msg { max-width: 92%; font-size: 13px; }
+  .intro-screen h1 { font-size: 24px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Rain overlay -->
+<div class="rain-container" id="rainOverlay"></div>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-title">🛺 Escape Silk Board</div>
+  <div class="header-badge" id="headerBadge">Live</div>
+</div>
+
+<div class="game-container">
+
+  <!-- INTRO SCREEN -->
+  <div class="intro-screen" id="introScreen">
+    <h1>🛺 Escape Silk Board</h1>
+    <p class="tagline">It's 7:00 PM. You're stuck at Bengaluru's most infamous junction. Your flight leaves at 9:40. Check-in closes at 8:55. Good luck.</p>
+    <div class="flight-card">
+      <div class="flight-row">
+        <label>Flight</label>
+        <span class="val">FL 2047</span>
+      </div>
+      <div class="flight-row">
+        <label>Departs</label>
+        <span class="val">21:40</span>
+      </div>
+      <div class="flight-row">
+        <label>Check-in closes</label>
+        <span class="val red">20:55</span>
+      </div>
+      <div class="flight-row">
+        <label>Your location</label>
+        <span class="val">Silk Board</span>
+      </div>
+    </div>
+    <button class="start-btn" onclick="startGame()">Start Escape</button>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="gameScreen" style="display:none;">
+    <div class="stats-grid">
+      <div class="stat-card" id="clockCard">
+        <div class="stat-label">Game Clock</div>
+        <div class="stat-value" id="clockVal">7:00 PM</div>
+        <div class="stat-sub" id="clockSub">115 min left</div>
+      </div>
+      <div class="stat-card" id="batteryCard">
+        <div class="stat-label">Phone Battery</div>
+        <div class="stat-value" id="batteryVal">🔋 4%</div>
+        <div class="stat-sub" id="batterySub">UPI needs power</div>
+      </div>
+      <div class="stat-card" id="cashCard">
+        <div class="stat-label">Cash</div>
+        <div class="stat-value" id="cashVal">₹500</div>
+        <div class="stat-sub" id="cashSub">UPI works while phone lives</div>
+      </div>
+      <div class="stat-card" id="bagCard">
+        <div class="stat-label">Bag</div>
+        <div class="stat-value" id="bagVal" style="font-size:15px;">1 cold samosa</div>
+        <div class="stat-sub">Use wisely</div>
+      </div>
+    </div>
+
+    <div class="route-bar">
+      <div class="route-track">
+        <div class="route-fill" id="routeFill" style="width: 2%">
+          <div class="route-dot"></div>
+        </div>
+      </div>
+      <div class="route-labels">
+        <span>Silk Board</span>
+        <span>Hebbal</span>
+        <span>KIA ✈️ 8:55</span>
+      </div>
+    </div>
+
+    <div class="turn-indicator" id="turnIndicator">Turn 1 · Silk Board junction</div>
+
+    <div class="chat-area" id="chatArea"></div>
+
+    <div class="typing" id="typingIndicator">
+      <span></span><span></span><span></span>
+    </div>
+
+    <div class="input-area">
+      <input type="text" id="playerInput" placeholder="What do you do?" autocomplete="off" />
+      <button class="send-btn" id="sendBtn" onclick="sendAction()">Go</button>
+    </div>
+  </div>
+</div>
+
+<!-- WIN OVERLAY -->
+<div class="overlay" id="winOverlay">
+  <div class="boarding-pass">
+    <div class="pass-header">
+      <h3>✅ Boarding Pass</h3>
+      <span style="font-size:20px;">✈️</span>
+    </div>
+    <div class="pass-body">
+      <div class="pass-row">
+        <div class="pass-field"><label>Passenger</label><div class="val">IRFAN AHMED</div></div>
+        <div class="pass-field" style="text-align:right;"><label>Flight</label><div class="val">FL 2047</div></div>
+      </div>
+      <div class="pass-row">
+        <div class="pass-field"><label>From</label><div class="val">BLR</div></div>
+        <div class="pass-field" style="text-align:center;"><label>Arrived</label><div class="val" id="winTime">8:45 PM</div></div>
+        <div class="pass-field" style="text-align:right;"><label>Status</label><div class="val" style="color:var(--green);">BOARDED</div></div>
+      </div>
+      <hr class="pass-divider">
+      <div class="pass-row" style="margin-top:14px; margin-bottom:0;">
+        <div class="pass-field"><label>Turns</label><div class="val" id="winTurns">8</div></div>
+        <div class="pass-field" style="text-align:center;"><label>Cash left</label><div class="val" id="winCash">₹20</div></div>
+        <div class="pass-field" style="text-align:right;"><label>Battery</label><div class="val" id="winBattery">1%</div></div>
+      </div>
+    </div>
+    <hr class="pass-divider">
+    <div class="pass-footer" id="winQuote">"Every journey starts at Silk Board, guru. You survived."</div>
+    <div class="pass-barcode">||||| |||| ||||| || |||| ||||| |||| SILK-BOARD-SURVIVOR ||||| |||| |||||</div>
+    <button class="play-again" onclick="resetGame()">🛺 Escape Again</button>
+  </div>
+</div>
+
+<!-- LOSE OVERLAY -->
+<div class="overlay" id="loseOverlay">
+  <div class="missed-cert">
+    <div class="cert-header"><h3>⚠️ Missed Flight Certificate</h3></div>
+    <div class="cert-body">
+      <div class="big-time" id="loseTime">9:12 PM</div>
+      <div class="cert-label">Time of acceptance</div>
+      <hr class="pass-divider">
+      <div class="cert-cause">
+        <label>Cause of Missed Flight</label>
+        <p id="loseCause">Got stuck in Silk Board traffic.</p>
+      </div>
+      <div class="cert-stats">
+        <div class="pass-field"><label>Turns</label><div class="val" id="loseTurns">12</div></div>
+        <div class="pass-field"><label>Last seen at</label><div class="val" id="loseLoc">Hebbal</div></div>
+      </div>
+    </div>
+    <div class="cert-ramesh" id="loseQuote">"Bengaluru traffic is a great equalizer, guru."</div>
+    <button class="play-again" onclick="resetGame()">🛺 Try Again</button>
+  </div>
+</div>
+
+<script>
+// ═══ GAME STATE (CODE OWNS THE FACTS) ═══
+let state = {
+  time: 19 * 60,       // 7:00 PM in minutes
+  battery: 4,
+  cash: 500,
+  inventory: ['1 cold samosa'],
+  location: 'silk_board',
+  locationLabel: 'Silk Board junction',
+  turn: 0,
+  history: [],
+  gameOver: false
+};
+
+const CHECKIN = 20 * 60 + 55; // 8:55 PM
+
+const LOC_PROGRESS = {
+  silk_board: 2, koramangala: 5, hsr_layout: 8, btm_layout: 10,
+  outer_ring_road: 30, hebbal: 60, airport_road: 85, airport: 100, random_gully: null
+};
+
+const WIN_QUOTES = [
+  "Every journey in Bengaluru is a miracle, guru. You just witnessed one.",
+  "Swalpa late aayithu, but you made it. Auto driver's blessings.",
+  "Even Google Maps couldn't have done it better. Okay, maybe Google Maps.",
+  "You survived Silk Board. The flight is just bonus, guru."
+];
+const LOSE_QUOTES = [
+  "Bengaluru traffic is a great equalizer, guru. CEO or intern, everyone is stuck.",
+  "Don't worry. Next flight also you'll miss. This city is consistent.",
+  "Aiyyo, the airport is just 40 km. What is 40 km? In Bengaluru, it is everything.",
+  "Swalpa adjust maadi, guru. Book the next flight. Same thing tomorrow."
+];
+const LOSE_CAUSES = [
+  "Underestimated Silk Board junction. A classic rookie mistake.",
+  "Bengaluru traffic does not negotiate. Neither does check-in.",
+  "One does not simply drive through Bengaluru in rush hour.",
+  "The auto meter ran out before the road did."
+];
+
+// ═══ HELPERS ═══
+function timeLabel(m) {
+  let h = Math.floor(m / 60), min = m % 60;
+  const ap = h >= 12 ? 'PM' : 'AM';
+  h = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+  return `${h}:${String(min).padStart(2,'0')} ${ap}`;
+}
+function minsLeft() { return Math.max(0, CHECKIN - state.time); }
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+// ═══ UI UPDATE ═══
+function updateUI() {
+  const ml = minsLeft();
+
+  // Clock
+  document.getElementById('clockVal').textContent = timeLabel(state.time);
+  document.getElementById('clockSub').textContent = ml <= 0 ? 'CHECK-IN CLOSED' : `${ml} min left`;
+  const cc = document.getElementById('clockCard');
+  cc.className = 'stat-card' + (ml <= 15 ? ' danger pulse' : ml <= 30 ? ' warning' : '');
+
+  // Battery
+  document.getElementById('batteryVal').textContent = state.battery <= 0 ? '💀 DEAD' : `🔋 ${state.battery}%`;
+  document.getElementById('batterySub').textContent = state.battery <= 0 ? 'No UPI. No cab apps.' : 'UPI needs power';
+  const bc = document.getElementById('batteryCard');
+  bc.className = 'stat-card' + (state.battery <= 0 ? ' danger' : state.battery <= 2 ? ' warning' : '');
+
+  // Cash
+  document.getElementById('cashVal').textContent = `₹${state.cash}`;
+  const cashC = document.getElementById('cashCard');
+  cashC.className = 'stat-card' + (state.cash <= 0 ? ' danger' : state.cash <= 50 ? ' warning' : '');
+  document.getElementById('cashSub').textContent = state.battery <= 0 ? 'Cash only now' : 'UPI works while phone lives';
+
+  // Bag
+  document.getElementById('bagVal').textContent = state.inventory.length ? state.inventory.join(', ') : 'Empty';
+
+  // Route
+  const prog = LOC_PROGRESS[state.location];
+  if (prog !== null && prog !== undefined) {
+    document.getElementById('routeFill').style.width = prog + '%';
+  }
+
+  // Turn
+  document.getElementById('turnIndicator').textContent = `Turn ${state.turn} · ${state.locationLabel}`;
+}
+
+// ═══ MESSAGES ═══
+
+function addMsg(text, type, hint) {
+  const area = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = `msg ${type}`;
+
+  if (type === 'narrator') {
+    const tag = document.createElement('div');
+    tag.className = 'narrator-tag';
+    tag.textContent = '🛺 Ramesh Uncle';
+    div.appendChild(tag);
+
+    div.appendChild(document.createTextNode(text || ''));
+
+    if (hint) {
+      const hintDiv = document.createElement('div');
+      hintDiv.className = 'hint';
+      hintDiv.textContent = `💡 ${hint}`;
+      div.appendChild(hintDiv);
+    }
+  } else {
+    div.textContent = text;
+  }
+
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+// ═══ STATE VALIDATION (CODE VALIDATES EVERYTHING) ═══
+function applyChanges(r) {
+  // Time — only forward, 5-30 min
+  if (r.timeDelta && r.timeDelta > 0) {
+    state.time += Math.min(Math.max(r.timeDelta, 5), 30);
+  }
+  // Cash — can't go below 0
+  if (r.cashDelta) {
+    state.cash = Math.max(0, state.cash + r.cashDelta);
+  }
+  // Battery — can't go below 0
+  if (r.batteryDelta) {
+    state.battery = Math.max(0, Math.min(100, state.battery + r.batteryDelta));
+  }
+  // Location
+  if (r.newLocation && r.newLocation !== 'null') {
+    state.location = r.newLocation;
+    if (r.locationLabel) state.locationLabel = r.locationLabel;
+  }
+  // Inventory
+  if (r.inventoryAdd) r.inventoryAdd.forEach(i => { if (!state.inventory.includes(i)) state.inventory.push(i); });
+  if (r.inventoryRemove) r.inventoryRemove.forEach(item => {
+    const idx = state.inventory.findIndex(i => i.toLowerCase().includes(item.toLowerCase()));
+    if (idx !== -1) state.inventory.splice(idx, 1);
+  });
+  state.turn++;
+}
+
+// ═══ GAME OVER ═══
+function checkEnd() {
+  if (state.location === 'airport' && state.time <= CHECKIN) { showWin(); return true; }
+  if (state.time > CHECKIN) { showLose(); return true; }
+  return false;
+}
+
+function showWin() {
+  state.gameOver = true;
+  document.getElementById('headerBadge').textContent = 'BOARDED';
+  document.getElementById('headerBadge').style.color = 'var(--green)';
+  document.getElementById('headerBadge').style.background = 'var(--green-light)';
+  document.getElementById('winTime').textContent = timeLabel(state.time);
+  document.getElementById('winTurns').textContent = state.turn;
+  document.getElementById('winCash').textContent = `₹${state.cash}`;
+  document.getElementById('winBattery').textContent = state.battery + '%';
+  document.getElementById('winQuote').textContent = `"${pick(WIN_QUOTES)}"`;
+  setTimeout(() => document.getElementById('winOverlay').classList.add('active'), 600);
+}
+
+function showLose() {
+  state.gameOver = true;
+  document.getElementById('headerBadge').textContent = 'MISSED';
+  document.getElementById('headerBadge').style.color = 'var(--red)';
+  document.getElementById('headerBadge').style.background = 'var(--red-light)';
+  document.getElementById('loseTime').textContent = timeLabel(state.time);
+  document.getElementById('loseTurns').textContent = state.turn;
+  document.getElementById('loseLoc').textContent = state.locationLabel;
+  document.getElementById('loseCause').textContent = pick(LOSE_CAUSES);
+  document.getElementById('loseQuote').textContent = `"${pick(LOSE_QUOTES)}"`;
+  setTimeout(() => document.getElementById('loseOverlay').classList.add('active'), 600);
+}
+
+// ═══ RAIN EFFECT ═══
+function startRain() {
+  const c = document.getElementById('rainOverlay');
+  c.innerHTML = '';
+  for (let i = 0; i < 50; i++) {
+    const d = document.createElement('div');
+    d.className = 'raindrop';
+    d.style.left = Math.random() * 100 + '%';
+    d.style.height = Math.random() * 20 + 10 + 'px';
+    d.style.animationDuration = Math.random() * 0.5 + 0.4 + 's';
+    d.style.animationDelay = Math.random() * 2 + 's';
+    c.appendChild(d);
+  }
+  c.classList.add('active');
+  setTimeout(() => c.classList.remove('active'), 8000);
+}
+
+// ═══ API CALL ═══
+async function sendAction() {
+  const input = document.getElementById('playerInput');
+  const action = input.value.trim();
+  if (!action || state.gameOver) return;
+
+  input.value = '';
+  input.disabled = true;
+  document.getElementById('sendBtn').disabled = true;
+
+  addMsg(action, 'player');
+  state.history.push(action);
+
+  document.getElementById('typingIndicator').classList.add('active');
+
+  try {
+    const res = await fetch('/api/narrate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        gameState: {
+          time: state.time, timeLabel: timeLabel(state.time),
+          minutesLeft: minsLeft(), battery: state.battery,
+          cash: state.cash, inventory: state.inventory,
+          location: state.location, locationLabel: state.locationLabel,
+          turn: state.turn, history: state.history
+        },
+        playerAction: action
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'The narrator returned an invalid response.');
+    }
+    document.getElementById('typingIndicator').classList.remove('active');
+    state = data.state;
+
+updateUI();
+
+    // Rain trigger
+    if (data.narration && /rain|downpour|drizzle|storm|shower/i.test(data.narration)) startRain();
+
+    addMsg(data.narration || '...', 'narrator', data.hint);
+
+    if (!checkEnd()) {
+      if (minsLeft() <= 15 && minsLeft() > 0) addMsg(`⚠️ ${minsLeft()} minutes until check-in closes!`, 'system');
+      if (state.battery === 1) addMsg('⚡ Battery critical! One more use and phone dies.', 'system');
+      if (state.battery <= 0 && state.turn === state.history.length)
+        addMsg('📱 Phone dead. No UPI. No cab apps. No maps.', 'system');
+    }
+  } catch (err) {
+    document.getElementById('typingIndicator').classList.remove('active');
+    addMsg("Ramesh Uncle squints. \"Swalpa wait guru, brain buffering like BSNL broadband.\" Try again.", 'narrator');
+  }
+
+  input.disabled = false;
+  document.getElementById('sendBtn').disabled = false;
+  if (!state.gameOver) input.focus();
+}
+
+// ═══ START / RESET ═══
+function startGame() {
+  document.getElementById('introScreen').style.display = 'none';
+
+  const gs = document.getElementById('gameScreen');
+  gs.style.display = 'flex';
+  gs.style.flexDirection = 'column';
+  gs.style.flex = '1';
+
+  updateUI();
+
+  addMsg(
+    "Silk Board, 7 PM. The signal has been red so long, the crows have built nests on it. " +
+    "Your flight to Delhi leaves at 9:40 — check-in closes at 8:55. You have ₹500, a phone at 4% battery, " +
+    "and one cold samosa from the morning. The airport is 40 kilometres away. " +
+    "An auto driver picks his teeth and watches you with mild interest.",
+    'narrator',
+    "Swalpa think before you act, guru. Time is not your friend today."
+  );
+
+  document.getElementById('playerInput').focus();
+}
+
+
+async function resetGame() {
+  const input = document.getElementById('playerInput');
+  const sendButton = document.getElementById('sendBtn');
+
+  input.disabled = true;
+  sendButton.disabled = true;
+
+  try {
+    // Reset the backend game session first.
+    const response = await fetch('/api/start', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Backend reset failed: HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (!data.state) {
+      throw new Error('Backend did not return a fresh game state.');
+    }
+
+    // Backend state is the source of truth.
+    state = data.state;
+
+    // Clear previous game overlays and messages.
+    document.getElementById('winOverlay').classList.remove('active');
+    document.getElementById('loseOverlay').classList.remove('active');
+    document.getElementById('rainOverlay').classList.remove('active');
+    document.getElementById('chatArea').innerHTML = '';
+
+    // Restore the game screen.
+    document.getElementById('introScreen').style.display = 'none';
+
+    const gameScreen = document.getElementById('gameScreen');
+    gameScreen.style.display = 'flex';
+    gameScreen.style.flexDirection = 'column';
+    gameScreen.style.flex = '1';
+
+    // Restore header.
+    const badge = document.getElementById('headerBadge');
+    badge.textContent = 'Live';
+    badge.style.color = '';
+    badge.style.background = '';
+
+    // Refresh all displayed stats.
+    updateUI();
+
+    addMsg(
+      "Back at Silk Board. Same traffic, same chaos, different choices. " +
+      "The meter is ticking, guru. What's the plan this time?",
+      'narrator',
+      "Maybe try a different route? Or the same one, faster."
+    );
+
+  } catch (error) {
+    console.error('Game reset failed:', error);
+    alert('Could not restart the game. Please try again.');
+  } finally {
+    input.disabled = false;
+    sendButton.disabled = false;
+    input.focus();
+  }
+}
+
+
+// Enter key submits the player's action.
+document.getElementById('playerInput').addEventListener('keydown', event => {
+  if (event.key === 'Enter') {
+    sendAction();
+  }
+});
+
+</script>
+</body>
+</html>
