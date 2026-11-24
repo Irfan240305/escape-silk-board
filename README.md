@@ -308,7 +308,17 @@ With additional development time, I would focus on:
 5. **Deployment:** Deploy the application with managed secrets, production configuration and appropriate API rate limits.
 
 ---
+## ⏱️ 60-Minute Engineering Challenge
 
+This project was implemented within the challenge's 60-minute time limit. The focus was on delivering a functional end-to-end experience while prioritising the core engineering requirements:
+
+- **Architecture:** Server-authoritative game state and rule validation.
+- **AI integration:** Structured LLM responses with controlled narration.
+- **Gameplay:** Time, battery, cash, inventory, route and event mechanics.
+- **Memory:** Conversation history and persistent character context within a game session.
+- **Reliability:** Automated tests covering invalid actions, resource constraints, and winning and losing conditions.
+
+The key engineering decision was to keep game logic deterministic and separate from AI-generated storytelling, allowing the experience to remain interactive without surrendering control of game state to the LLM.
 ## 👨‍💻 Author
 
 **Irfan Ahmed**
