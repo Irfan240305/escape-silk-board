@@ -166,7 +166,7 @@ escape-silk-board/
 Open the GitHub repository and copy its HTTPS clone URL.
 
 ```bash
-git clone <YOUR_REPOSITORY_CLONE_URL>
+git clone https://github.com/Irfan240305/escape-silk-board.git
 cd escape-silk-board
 ```
 
